@@ -36,9 +36,18 @@ export class TodosAccess {
       return item
     }
 
-    async updateTodoItem(item: TodoUpdate, itemId: String, userId : String): Promise<any>{
+    async updateTodoItem(item: TodoUpdate, itemId: string, userId : string): Promise<any>{
 
-        const response:TodoItem = await this.getTodoItembyID(itemId,userId);
+        const response = await this.getTodoItembyID(itemId,userId);
+
+        if (!response) {
+          return {
+            statusCode: 404,
+            body: JSON.stringify({
+              error: 'Item does not exist'
+            })
+          }
+        }
 
         await this.docClient.update({
           TableName: this.itemsTable,
@@ -57,9 +66,18 @@ export class TodosAccess {
         return true;
     }
 
-    async deleteTodoItem(itemId: String, userId: String): Promise<any>{
+    async deleteTodoItem(itemId: string, userId: string): Promise<any>{
 
-      const response:TodoItem = await this.getTodoItembyID(itemId,userId)
+      const response = await this.getTodoItembyID(itemId,userId);
+
+      if (!response) {
+        return {
+          statusCode: 404,
+          body: JSON.stringify({
+            error: 'Item does not exist'
+          })
+        }
+      }
 
       await this.docClient.delete({
         TableName: this.itemsTable,
@@ -70,14 +88,17 @@ export class TodosAccess {
       })
     }
 
-    async getTodoItembyID(itemID : String, userId: String): Promise<TodoItem>{
-      return await this.docClient.get({
+    async getTodoItembyID(itemID : string, userId: string): Promise<any>{
+      const result=  await this.docClient.get({
         TableName: this.itemsTable,
         Key: {
           userId: userId,
           todoId: itemID
         }
       }).promise();
+
+      console.log('Get group: ', result)
+      return !!result.Item;
     }
 
 

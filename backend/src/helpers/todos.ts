@@ -40,11 +40,11 @@ export async function updateTodo(
     itemId: string,
     event: APIGatewayProxyEvent
   ): Promise<TodoItem> {
-    
+
     const userId = getUserId(event);
     return await todoAccess.updateTodoItem({
         ...updateTodoRequest
-    },itemId)
+    },itemId,userId)
 }
 
 export async function deleteTodo(
@@ -53,6 +53,6 @@ export async function deleteTodo(
   ): Promise<TodoItem> {
   
     const userId = getUserId(event);
-    return await todoAccess.deleteTodoItem(itemId);
+    return await todoAccess.deleteTodoItem(itemId,userId);
 }
 
