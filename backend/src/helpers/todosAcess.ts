@@ -13,29 +13,76 @@ export class TodosAccess {
 
     constructor(
       private readonly docClient: DocumentClient = createDynamoDBClient(),
-      private readonly groupsTable = process.env.TODOS_TABLE) {
+      private readonly itemsTable = process.env.TODOS_TABLE) {
     }
   
     async getAllItems(): Promise<TodoItem[]> {
       console.log('Getting all items')
   
       const result = await this.docClient.scan({
-        TableName: this.groupsTable
+        TableName: this.itemsTable
       }).promise()
   
       const items = result.Items
       return items as TodoItem[]
     }
   
-    async createTodItem(item: TodoItem): Promise<TodoItem> {
+    async createTodoItem(item: TodoItem): Promise<TodoItem> {
       await this.docClient.put({
-        TableName: this.groupsTable,
-        Item: group
+        TableName: this.itemsTable,
+        Item: item
       }).promise()
   
       return item
     }
+
+    async updateTodoItem(item: TodoUpdate, itemId: String, userId : String): Promise<any>{
+
+        const response:TodoItem = await this.getTodoItembyID(itemId,userId);
+
+        await this.docClient.update({
+          TableName: this.itemsTable,
+          Key: {
+            userId: response.userId,
+            todoId: response.todoId,
+          },
+          UpdateExpression: "set done = :do, dueDate = :du, name = :n",
+          ExpressionAttributeValues: {
+            ":do": item.done,
+            ":du": item.dueDate,
+            ":n": item.name
+          },
+        })
+
+        return true;
+    }
+
+    async deleteTodoItem(itemId: String, userId: String): Promise<any>{
+
+      const response:TodoItem = await this.getTodoItembyID(itemId,userId)
+
+      await this.docClient.delete({
+        TableName: this.itemsTable,
+        Key: {
+          userId: response.userId,
+          todoId: response.todoId
+        },
+      })
+    }
+
+    async getTodoItembyID(itemID : String, userId: String): Promise<TodoItem>{
+      return await this.docClient.get({
+        TableName: this.itemsTable,
+        Key: {
+          userId: userId,
+          todoId: itemID
+        }
+      }).promise();
+    }
+
+
   }
+
   
   function createDynamoDBClient() {
     if (process.env.IS_OFFLINE) {

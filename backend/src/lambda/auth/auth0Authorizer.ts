@@ -56,18 +56,14 @@ export const handler = async (
 
 async function verifyToken(authHeader: string): Promise<JwtPayload> {
   const token = getToken(authHeader)
-  const jwt: Jwt = decode(token, { complete: true }) as Jwt
-
   // TODO: Implement token verification
   // You should implement it similarly to how it was implemented for the exercise for the lesson 5
   // You can read more about how to do this here: https://auth0.com/blog/navigating-rs256-and-jwks/
-  
     const response = await Axios.get(jwksUrl);
-    console.log(response);
-    const cert ="";
-    //certToPEM(response.n);
+    const resp= response.data;
+    const cert = certToPEM(resp.keys[0].x5c[0]);
 
-     return verify(token, cert, { algorithms: ['RS256'] }) as JwtToken
+    return verify(token, cert, { algorithms: ['RS256'] }) as JwtToken
 }
 
 function getToken(authHeader: string): string {
@@ -81,8 +77,8 @@ function getToken(authHeader: string): string {
 
   return token
 }
-
-export function certToPEM(cert) {
+ 
+function certToPEM(cert) {
   cert = cert.match(/.{1,64}/g).join('\n');
   cert = `-----BEGIN CERTIFICATE-----\n${cert}\n-----END CERTIFICATE-----\n`;
   return cert;
