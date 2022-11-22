@@ -83,6 +83,7 @@ functions:
       Action:
         - dynamodb:Scan
         - dynamodb:GetItem
+        - dynamodb:Query
       Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
   # TODO: Configure this function - 
   # Provide iamRoleStatements property. Decide the Actions and AWS Resource. 
@@ -114,7 +115,7 @@ functions:
     handler: src/lambda/http/updateTodo.handler
     events:
       - http:
-          method: patch
+          method: put
           path: todos/{todoId}
           cors: true
           authorizer: Auth
@@ -150,8 +151,8 @@ functions:
     - Effect: Allow
       Action:
         - dynamodb:GetItem
-        - dynamodb:UpdateItem
         - dynamodb:PutItem
+        - dynamodb:DeleteItem
       Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
   # TODO: Configure this function

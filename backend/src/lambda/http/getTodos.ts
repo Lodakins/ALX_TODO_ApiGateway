@@ -7,7 +7,7 @@ import { getTodos } from '../../helpers/todos';
 // TODO: Get all TODO items for a current user
 export const handler = middy(async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     // Write your code here
-    const items =  await getTodos();
+    const items =  await getTodos(event);
 
     return {
       statusCode: 201,

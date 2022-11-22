@@ -1,19 +1,17 @@
 import { TodosAccess } from './todosAcess'
-import { AttachmentUtils } from './attachmentUtils';
 import { TodoItem } from '../models/TodoItem'
 import { CreateTodoRequest } from '../requests/CreateTodoRequest'
 import { UpdateTodoRequest } from '../requests/UpdateTodoRequest'
-import { createLogger } from '../utils/logger'
 import * as uuid from 'uuid'
-import * as createError from 'http-errors'
 import { getUserId } from '../lambda/utils';
 import { APIGatewayProxyEvent } from 'aws-lambda';
 
 // TODO: Implement businessLogic
 const todoAccess = new TodosAccess()
 
-export async function getTodos(): Promise<TodoItem[]> {
-  return todoAccess.getAllItems()
+export async function getTodos(event: APIGatewayProxyEvent): Promise<TodoItem[]> {
+  const userId = getUserId(event);
+  return await todoAccess.getAllItems(userId);
 }
 
 export async function createTodo(
@@ -42,9 +40,7 @@ export async function updateTodo(
   ): Promise<TodoItem> {
 
     const userId = getUserId(event);
-    return await todoAccess.updateTodoItem({
-        ...updateTodoRequest
-    },itemId,userId)
+    return await todoAccess.updateTodoItem(updateTodoRequest,itemId,userId);
 }
 
 export async function deleteTodo(

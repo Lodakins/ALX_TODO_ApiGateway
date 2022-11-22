@@ -16,28 +16,49 @@ export class TodosAccess {
       private readonly itemsTable = process.env.TODOS_TABLE) {
     }
   
-    async getAllItems(): Promise<TodoItem[]> {
-      console.log('Getting all items')
+    async getAllItems(userId: string): Promise<TodoItem[]> {
   
-      const result = await this.docClient.scan({
-        TableName: this.itemsTable
-      }).promise()
-  
-      const items = result.Items
-      return items as TodoItem[]
+      try{
+        const result = await this.docClient.query({
+          TableName: this.itemsTable,
+          KeyConditionExpression: 'userId = :ur',
+          ExpressionAttributeValues: {
+            ':ur': userId
+          }
+        }).promise()
+        const items = result.Items
+        return items as TodoItem[]
+    
+      }catch(err){
+        logger.log()
+        throw new Error(err);
+      }
+      
+     
     }
   
     async createTodoItem(item: TodoItem): Promise<TodoItem> {
-      await this.docClient.put({
-        TableName: this.itemsTable,
-        Item: item
-      }).promise()
-  
-      return item
+        try{
+          await this.docClient.put({
+            TableName: this.itemsTable,
+            Item: item
+          }).promise()
+      
+          return item
+
+        }catch(err){
+          logger.log({
+            level: 'error',
+            message: err
+          });
+          throw new Error(err);
+        }
+      
     }
 
     async updateTodoItem(item: TodoUpdate, itemId: string, userId : string): Promise<any>{
 
+      try{
         const response = await this.getTodoItembyID(itemId,userId);
 
         if (!response) {
@@ -52,43 +73,65 @@ export class TodosAccess {
         await this.docClient.update({
           TableName: this.itemsTable,
           Key: {
-            userId: response.userId,
-            todoId: response.todoId,
+            userId: userId,
+            todoId: itemId
           },
-          UpdateExpression: "set done = :do, dueDate = :du, name = :n",
+          UpdateExpression: "SET done = :do, dueDate = :du, #name = :n",
+          ExpressionAttributeNames:{
+            "#name": "name"
+          },
           ExpressionAttributeValues: {
             ":do": item.done,
             ":du": item.dueDate,
             ":n": item.name
           },
-        })
+        }).promise();
 
         return true;
+      }catch(err){
+        logger.log({
+          level: 'error',
+          message: err
+        });
+        throw new Error(err);
+      }
+
+       
     }
 
     async deleteTodoItem(itemId: string, userId: string): Promise<any>{
 
-      const response = await this.getTodoItembyID(itemId,userId);
-
-      if (!response) {
-        return {
-          statusCode: 404,
-          body: JSON.stringify({
-            error: 'Item does not exist'
-          })
+      try{
+        const response = await this.getTodoItembyID(itemId,userId);
+        if (!response) {
+          return {
+            statusCode: 404,
+            body: JSON.stringify({
+              error: 'Item does not exist'
+            })
+          }
         }
-      }
+  
+        await this.docClient.delete({
+          TableName: this.itemsTable,
+          Key: {
+            userId: userId,
+            todoId: itemId
+          }
+        }).promise()
 
-      await this.docClient.delete({
-        TableName: this.itemsTable,
-        Key: {
-          userId: response.userId,
-          todoId: response.todoId
-        },
-      })
+        return true;
+      }catch(err){
+        logger.log({
+          level: 'error',
+          message: err
+        });
+        throw new Error(err);
+      }
+      
     }
 
-    async getTodoItembyID(itemID : string, userId: string): Promise<any>{
+    async getTodoItembyID(itemID : string, userId: string): Promise<boolean>{
       const result=  await this.docClient.get({
         TableName: this.itemsTable,
         Key: {
@@ -97,7 +140,6 @@ export class TodosAccess {
         }
       }).promise();
 
-      console.log('Get group: ', result)
       return !!result.Item;
     }
 
