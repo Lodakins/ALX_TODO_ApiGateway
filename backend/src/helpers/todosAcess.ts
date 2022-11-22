@@ -30,7 +30,10 @@ export class TodosAccess {
         return items as TodoItem[]
     
       }catch(err){
-        logger.log()
+        logger.log({
+          level: 'error',
+          message: err
+        });
         throw new Error(err);
       }
       
@@ -42,7 +45,7 @@ export class TodosAccess {
           await this.docClient.put({
             TableName: this.itemsTable,
             Item: item
-          }).promise()
+          }).promise();
       
           return item
 
@@ -62,6 +65,10 @@ export class TodosAccess {
         const response = await this.getTodoItembyID(itemId,userId);
 
         if (!response) {
+          logger.log({
+            level: 'warn',
+            message: "Item does not exist"
+          });
           return {
             statusCode: 404,
             body: JSON.stringify({
@@ -87,6 +94,11 @@ export class TodosAccess {
           },
         }).promise();
 
+        logger.log({
+          level: 'info',
+          message: "Record updated"
+        });
+
         return true;
       }catch(err){
         logger.log({
@@ -104,6 +116,10 @@ export class TodosAccess {
       try{
         const response = await this.getTodoItembyID(itemId,userId);
         if (!response) {
+          logger.log({
+            level: 'warn',
+            message: "Item does not exist"
+          });
           return {
             statusCode: 404,
             body: JSON.stringify({

@@ -16,6 +16,7 @@ const logger = createLogger('TodosAccess');
 const docClient = new XAWS.DynamoDB.DocumentClient()
 
 const itemsTable = process.env.TODOS_TABLE;
+const bucketName = process.env.ATTACHMENT_S3_BUCKET;
 
 export const handler = middy(
   async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
@@ -35,7 +36,7 @@ export const handler = middy(
   
     const url = getUploadUrl(todoId);
 
-    await updateItem(url,todoId,event);
+    await updateItem(todoId,event);
   
     return {
       statusCode: 201,
@@ -54,7 +55,7 @@ handler
     })
   )
 
-  async function updateItem(url: string, itemId: string, event: APIGatewayProxyEvent) {
+  async function updateItem( itemId: string, event: APIGatewayProxyEvent) {
 
     try{
 
@@ -66,9 +67,14 @@ handler
         },
         UpdateExpression: "set attachmentUrl = :do",
         ExpressionAttributeValues: {
-          ":do": url
+          ":do": `https://${bucketName}.s3.amazonaws.com/${itemId}`
         },
       }).promise();
+
+      logger.log({
+        level: 'info',
+        message: "File URL saved successfully"
+      });
 
     }catch(error){
       logger.log({
