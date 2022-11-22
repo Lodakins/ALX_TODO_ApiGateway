@@ -82,8 +82,8 @@ handler
   }
 
    async function itemExists(itemId: string, event: APIGatewayProxyEvent){
-    const result= await this.docClient.get({
-        TableName: this.itemsTable,
+    const result= await docClient.get({
+        TableName: itemsTable,
         Key: {
           userId: getUserId(event),
           todoId: itemId
