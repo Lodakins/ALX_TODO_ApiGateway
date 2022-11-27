@@ -12,7 +12,7 @@ export const handler = middy (async (event: APIGatewayProxyEvent): Promise<APIGa
   return {
     statusCode: 201,
     body: JSON.stringify({
-      newItem
+      item: newItem
     })
   }
 

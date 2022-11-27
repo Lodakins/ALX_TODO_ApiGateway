@@ -47,7 +47,7 @@ export class TodosAccess {
             Item: item
           }).promise();
       
-          return item
+          return item;
 
         }catch(err){
           logger.log({
